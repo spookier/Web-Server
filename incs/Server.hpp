@@ -1,6 +1,7 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+#include "Client.hpp"
 #include <sys/socket.h>
 #include <errno.h>
 #include <iostream>
@@ -11,6 +12,7 @@
 #include <poll.h>
 #include <unistd.h>
 #include <cstdio>
+#include <map>
 
 class Server
 {
@@ -29,6 +31,7 @@ class Server
 
 
 
+
 		char 						buffer[1024];
 
 		struct sockaddr_in          sockaddr;
@@ -38,6 +41,8 @@ class Server
 
 
 		std::vector<struct pollfd>	poll_fds;
+		std::vector<Client>			client_list;
+
 
 
 	public:

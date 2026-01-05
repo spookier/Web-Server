@@ -3,22 +3,31 @@
 
 #include <string>
 #include <iostream>
-#include <map>
 
 class Client                    
 {
-    private:
-        Client();
-        int fd;
-        std::map<int, std::string> client_requests;     // key = fd -> buffer
+	private:
+		int 		fd;
+		std::string buffer;
+		bool 		request_complete;
 
-
+		Client();
 
 	public:
-        Client(int fd);
-        ~Client();
-        Client(const Client &c);
-        Client &operator=(const Client &other);
+		Client(int fd);
+		Client(const Client &c);
+		Client &operator=(const Client &other);
+
+		~Client();
+
+
+
+
+		int getFd() const;
+		bool isRequestComplete() const;
+		std::string getBuffer() const;
+
+		void save_buffer(std::string data);
 
 };
 
