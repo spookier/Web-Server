@@ -16,8 +16,15 @@ void Server::socket_init()
 	if (this->socketfd < 0)
 	{
 		printf("Socket failed: %s\n", strerror(errno));
+		return;
+	}
+	int opt = 1;
+    if (setsockopt(this->socketfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)	// allows for instant server restart / no downtime of port being used
+	{
+		printf("Setsockopt failed: %s\n", strerror(errno));
 		return ;
 	}
+
 	fcntl(this->socketfd, F_SETFL, O_NONBLOCK);
 }
 
@@ -26,15 +33,15 @@ void Server::bind_init()
 	// Clear the structure memory
 	memset(&this->sockaddr, 0, sizeof(this->sockaddr));
 
-	this->sockaddr.sin_family 		= AF_INET;          // Use IPv4
-	this->sockaddr.sin_addr.s_addr 	= INADDR_ANY;   	// Accept connections from any interface
-	this->sockaddr.sin_port 		= htons(8080);      // Port 8080 with Big Endian order
+	this->sockaddr.sin_family = AF_INET;		 // Use IPv4
+	this->sockaddr.sin_addr.s_addr = INADDR_ANY; // Accept connections from any interface
+	this->sockaddr.sin_port = htons(8080);		 // Port 8080 with Big Endian order
 
 	this->bindfd = bind(socketfd, (struct sockaddr *)&this->sockaddr, sizeof(this->sockaddr));
-	if(this->bindfd != 0)
+	if (this->bindfd != 0)
 	{
 		printf("Bind failed: %s\n", strerror(errno));
-		return ;
+		return;
 	}
 }
 
@@ -42,10 +49,10 @@ void Server::listen_init()
 {
 
 	this->listenfd = listen(socketfd, max_cons);
-	if(this->listenfd != 0)
+	if (this->listenfd != 0)
 	{
 		printf("Listen failed: %s\n", strerror(errno));
-		return ;
+		return;
 	}
 
 	this->listen_pollfd.fd = this->socketfd;
@@ -57,7 +64,7 @@ void Server::server_loop()
 {
 	while (true)
 	{
-		int ret = poll(&poll_fds[0], poll_fds.size(), -1); 								// Blocks here until an event happens
+		int ret = poll(&poll_fds[0], poll_fds.size(), -1); // Blocks here until an event happens
 		if (ret < 0)
 		{
 			printf("Poll failed: %s\n", strerror(errno));
@@ -66,9 +73,26 @@ void Server::server_loop()
 
 		for (size_t i = 0; i < poll_fds.size(); ++i)
 		{
-			if (poll_fds[i].revents & POLLIN)					 						// Check responses
+			if (poll_fds[i].revents & (POLLHUP | POLLERR)) // Connection is dead, clean up
 			{
-				if (poll_fds[i].fd == socketfd) 										// RING RING someone wants to join
+				if (poll_fds[i].fd != socketfd) // Don't close the listening socket
+				{
+					for (size_t j = 0; j < client_list.size(); ++j) // Find and remove from client_list
+					{
+						if (client_list[j].getFd() == poll_fds[i].fd)
+						{
+							close(poll_fds[i].fd);
+							client_list.erase(client_list.begin() + j);
+							break;
+						}
+					}
+					poll_fds.erase(poll_fds.begin() + i);
+					--i; // Adjust index since we removed an element
+				}
+			}
+			else if (poll_fds[i].revents & POLLIN) // Check responses if data is available to read
+			{
+				if (poll_fds[i].fd == socketfd) // RING RING someone wants to join
 				{
 					client_addr_len = sizeof(client_addr);
 
@@ -79,7 +103,7 @@ void Server::server_loop()
 						return;
 					}
 
-					struct pollfd new_fd; 												// We create a pollfd struct for this client to monitor
+					struct pollfd new_fd; // We create a pollfd struct and add it to list so poll() can monitor it for events
 
 					new_fd.fd = acceptfd;
 					new_fd.events = POLLIN;
@@ -88,36 +112,59 @@ void Server::server_loop()
 					fcntl(new_fd.fd, F_SETFL, O_NONBLOCK);
 					poll_fds.push_back(new_fd);
 
-					Client new_client = Client(acceptfd);									// We create a Client and add it to client list
+					Client new_client = Client(acceptfd); // We create a Client and add it to client list
 					client_list.push_back(new_client);
 				}
-				else																		// not a new connection, so it means its an already existing client
+				else // Not a new connection, so it means its an already existing client
 				{
 
-					for (size_t j = 0; j < client_list.size(); ++j) 						// Now find which client has that pollfd / acceptfd (they are the same)
+					for (size_t j = 0; j < client_list.size(); ++j) // Now find which client has that pollfd / acceptfd (they are the same)
 					{
-						if (client_list[j].getFd() == poll_fds[i].fd) 						// If here = we found the client that polled
+						if (client_list[j].getFd() == poll_fds[i].fd) // If here = we found the client that polled
 						{
-							std::cout << "Client speaking is " << client_list[i].getFd() << "\n";
+							//std::cout << "Client speaking is " << client_list[j].getFd() << "\n";
 
 							bytes_read = recv(poll_fds[i].fd, buffer, sizeof(buffer), 0);
 							if (bytes_read < 0 && errno != EWOULDBLOCK) // Error case
 							{
 								printf("Read failed: %s\n", strerror(errno));
-								return;
+								break ;
 							}
-							else if (bytes_read == 0) 										// user disconnected case
+							else if (bytes_read == 0) // If here = user disconnected
 							{
-								printf("User [%d] Disconnected\n\n", poll_fds[i].fd);
+								//printf("User [%d] Disconnected\n\n", poll_fds[i].fd);
 								close(poll_fds[i].fd);
 								poll_fds.erase(poll_fds.begin() + i);
 								client_list.erase(client_list.begin() + j);
 								--i;
 								break;
 							}
+
 							buffer[bytes_read] = 0;
-							client_list[j].save_buffer(buffer); 							// Save the data from temp buffer to the client's buffer
-							printf("[%d]: %s\n", poll_fds[i].fd, client_list[j].getBuffer().c_str());
+							client_list[j].save_buffer(buffer); // Save the data from temp buffer to the client's buffer
+							if (client_list[j].isRequestComplete() == true)		// If client sent everything, server respond 
+							{
+								char resp[] = "HTTP/1.1 200 OK\r\n\r\n";		// Basic 200 response
+								int bytes_sent = send(client_list[j].getFd(), resp, strlen(resp), 0);
+								if (bytes_sent < 0)
+								{
+									printf("Send failed: %s\n", strerror(errno));
+									// Close and cleanup this client
+									close(poll_fds[i].fd);
+									poll_fds.erase(poll_fds.begin() + i);
+									client_list.erase(client_list.begin() + j);
+									--i;
+									break;
+								}
+								// in HTTP/1.0 protocol, the connection is insta closed after a response
+								close(client_list[j].getFd());
+								poll_fds.erase(poll_fds.begin() + i);
+								client_list.erase(client_list.begin() + j);
+								--i;
+								break;
+							}
+
+							//printf("[%d]: %s\n", poll_fds[i].fd, client_list[j].getBuffer().c_str());
 						}
 					}
 				}
@@ -126,27 +173,24 @@ void Server::server_loop()
 	}
 }
 
-
 void Server::cleanup()
 {
-	for(size_t i = 0; i < poll_fds.size(); ++i)
+	for (size_t i = 0; i < poll_fds.size(); ++i)
 	{
-		if(poll_fds[i].fd)
+		if (poll_fds[i].fd)
 		{
 			close(poll_fds[i].fd);
 		}
 	}
-	if(acceptfd)
+	if (acceptfd)
 		close(acceptfd);
-	if(listen_pollfd.fd)
+	if (listen_pollfd.fd)
 		close(listen_pollfd.fd);
-	if(bindfd)
+	if (bindfd)
 		close(bindfd);
-	if(socketfd)
+	if (socketfd)
 		close(socketfd);
 }
-
-
 
 Server::~Server()
 {
