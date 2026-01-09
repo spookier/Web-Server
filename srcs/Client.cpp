@@ -1,6 +1,4 @@
 #include "../incs/Client.hpp"
-#include "Client.hpp"
-
 
 Client::Client(int _fd) : fd(_fd), request_complete(false)
 {
@@ -49,6 +47,18 @@ std::string Client::getBuffer() const
 {
 	return (this->buffer);
 }
+
+
+std::string Client::getRequest()
+{
+	this->buffer = request.parseRequest(this->buffer);
+	return(this->buffer);
+}
+
+
+
+
+
 Client::~Client()
 {
         std::cout << "Client copy DECONSTRUCTOR called for fd: " << this->fd << std::endl;

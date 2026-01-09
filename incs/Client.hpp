@@ -1,8 +1,11 @@
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
+#include "Request.hpp"
+
 #include <string>
 #include <iostream>
+
 
 class Client                    
 {
@@ -12,6 +15,7 @@ class Client
 		bool 		request_complete;
 
 		Client();
+		Request request;
 
 	public:
 		Client(int fd);
@@ -21,13 +25,14 @@ class Client
 		~Client();
 
 
-
-
 		int getFd() const;
 		bool isRequestComplete() const;
 		std::string getBuffer() const;
 
+
 		void save_buffer(std::string data);
+
+		std::string getRequest();
 
 };
 
