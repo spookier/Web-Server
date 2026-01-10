@@ -32,8 +32,8 @@ class Client
 
 		void save_buffer(std::string data);
 
-		std::string getRequest();
-
+		bool isRequestValid();
+        
 };
 
 #endif

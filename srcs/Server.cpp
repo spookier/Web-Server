@@ -143,13 +143,12 @@ void Server::server_loop()
 							client_list[j].save_buffer(buffer); // Save the data from temp buffer to the client's buffer
 							if (client_list[j].isRequestComplete() == true)		// If client sent everything, server respond 
 							{
-                                
+                                std::cout << "Server responding...\n";
 								char resp[] = "HTTP/1.1 200 OK\r\n\r\n";		// Respond back to client with a basic 200 response
-                                                                                // After we parse everything we choose how to respond here
+                                client_list[j].isRequestValid(); 
+
 								// std::string resp = client_list[j].getRequest();
 								//int bytes_sent = send(client_list[j].getFd(), resp.c_str(), resp.length(), 0);
-
-                                client_list[j].getRequest();
 								int bytes_sent = send(client_list[j].getFd(), resp, strlen(resp), 0);
 								if (bytes_sent < 0)
 								{
@@ -161,6 +160,7 @@ void Server::server_loop()
 									--i;
 									break;
 								}
+                                std::cout << "Closing client " << client_list[j].getFd() << "\n"; 
 								// in HTTP/1.0 protocol, the connection is insta closed after a response
 								close(client_list[j].getFd());
 								poll_fds.erase(poll_fds.begin() + i);

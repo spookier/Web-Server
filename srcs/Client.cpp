@@ -49,10 +49,12 @@ std::string Client::getBuffer() const
 }
 
 
-std::string Client::getRequest()
+bool Client::isRequestValid()
 {
-	this->buffer = request.parseRequest(this->buffer);
-	return(this->buffer);
+    if (request.parseRequest(this->buffer) == true)
+        return (true);
+    else
+        return (false);
 }
 
 

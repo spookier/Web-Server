@@ -34,6 +34,8 @@ class Request
         // PATH
         bool parsePath(std::string &buffer);
         
+        // VERSION
+        bool parseVersion(std::string &buffer);
 
 };
 
