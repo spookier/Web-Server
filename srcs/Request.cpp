@@ -2,34 +2,35 @@
 
 Request::Request()
 {
-	
+
 }
 
-std::string Request::parseRequest(std::string &buffer)
+bool Request::parseRequest(std::string &buffer)
 {
 	// GET/POST/DELETE
-    if (parseMethod(buffer) == "")
+    if (parseMethod(buffer) == false)
     {
-        std::cout << "Parse Method failed\n";
+        std::cout << "Parse METHOD failed\n";
 		this->is_valid = false;
-        return "";
+        return (false);
+    }
+    if (parsePath(buffer) == false)
+    {
+        std::cout << "Parse PATH fail\n";
+        this->is_valid = false;
+        return (false);
     }
     
-    // if (parsePath(buffer) == "")
-    // {
-    //     std::cout << "Parse PATH fail\n";
-    //     this->is_valid = false;
-    //     return "";
-    // }
-    // 
 	this->is_valid = true;
-	return(buffer);
+    
+    std::cout << this->method << this->path << std::endl;
+	return(true);
 }
 
 
 //  Example Input: "GET /index.html HTTP/1.1\r\n"
 
-std::string Request::parseMethod(std::string &buffer)
+bool Request::parseMethod(std::string &buffer)
 {	
     if (buffer.length() >= 4)
     {
@@ -39,7 +40,7 @@ std::string Request::parseMethod(std::string &buffer)
             this->method = "GET ";
             buffer.erase(0, 4);                             // Shorten the buffer for faster processing with erase()
 
-            return (buffer);
+            return (true);
         }
         else if (buffer.compare(0, 5, "POST ") == 0)        // POST
         {
@@ -47,7 +48,7 @@ std::string Request::parseMethod(std::string &buffer)
             this->method = "POST";
             buffer.erase(0, 5);
 
-            return (buffer);
+            return (true);
         }
         else if (buffer.compare(0, 7, "DELETE ") == 0)      // DELETE
         {
@@ -55,20 +56,30 @@ std::string Request::parseMethod(std::string &buffer)
             buffer.erase(0, 7);
             std::cout << "You called a DELETE method !\n";
 
-            return (buffer);
+            return (true);
         }
         else
-            return (""); // false
+            return (false); // false
     }
-    return ("");
+    return (false);
 }
-//
-// bool Request::parsePath(const std::string &buffer)
-// {
-//
-//     return(false);
-// }
-//
+
+bool Request::parsePath(std::string &buffer)
+{
+    size_t space_position;
+
+    space_position = buffer.find(' ');
+
+    if(space_position == std::string::npos || space_position == 0) // Invalid format
+    {
+        return (false);
+    }
+    
+    this->path.assign(buffer.begin(), buffer.begin() + space_position);
+    buffer.erase(0, space_position + 1);
+    return(true);
+}
+
 
 
 Request::~Request()

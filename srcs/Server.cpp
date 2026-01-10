@@ -143,10 +143,14 @@ void Server::server_loop()
 							client_list[j].save_buffer(buffer); // Save the data from temp buffer to the client's buffer
 							if (client_list[j].isRequestComplete() == true)		// If client sent everything, server respond 
 							{
-								//char resp[] = "HTTP/1.1 200 OK\r\n\r\n";		// Basic 200 response
+                                
+								char resp[] = "HTTP/1.1 200 OK\r\n\r\n";		// Respond back to client with a basic 200 response
+                                                                                // After we parse everything we choose how to respond here
+								// std::string resp = client_list[j].getRequest();
+								//int bytes_sent = send(client_list[j].getFd(), resp.c_str(), resp.length(), 0);
 
-								std::string resp = client_list[j].getRequest();
-								int bytes_sent = send(client_list[j].getFd(), resp.c_str(), resp.length(), 0);
+                                client_list[j].getRequest();
+								int bytes_sent = send(client_list[j].getFd(), resp, strlen(resp), 0);
 								if (bytes_sent < 0)
 								{
 									printf("Send failed: %s\n", strerror(errno));
