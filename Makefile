@@ -1,4 +1,4 @@
-NAME = webserv
+NAME = webserver
 CC = c++
 CFLAGS = -std=c++98 -Wall -Werror -Wextra
 

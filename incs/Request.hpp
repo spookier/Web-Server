@@ -26,11 +26,12 @@ class Request
         ~Request(); 
                                                                                             
 
-        std::string parseRequest(const std::string &buffer);
+        std::string parseRequest(std::string &buffer);
 
 		// GET/POST/DELETE
-        bool parseMethod(const std::string &buffer);
-
+        std::string parseMethod(std::string &buffer);
+        // std::string parsePath(std::string &buffer);
+        
 
 };
 

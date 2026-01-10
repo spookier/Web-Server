@@ -3,12 +3,12 @@
 Client::Client(int _fd) : fd(_fd), request_complete(false)
 {
     // @ DEBUG
-    std::cout << "Client created for fd: " << this->fd << std::endl;
+    // std::cout << "Client created for fd: " << this->fd << std::endl;
 }
 
 Client::Client(const Client &c) : fd(c.fd), buffer(c.buffer), request_complete(c.request_complete)
 {
-    std::cout << "Client copy constructor called for fd: " << this->fd << std::endl;
+    // std::cout << "Client copy constructor called for fd: " << this->fd << std::endl;
 }
 
 Client &Client::operator=(const Client &other)
@@ -61,5 +61,5 @@ std::string Client::getRequest()
 
 Client::~Client()
 {
-        std::cout << "Client copy DECONSTRUCTOR called for fd: " << this->fd << std::endl;
+        // std::cout << "Client copy DECONSTRUCTOR called for fd: " << this->fd << std::endl;
 }
