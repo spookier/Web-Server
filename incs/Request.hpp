@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include <iostream>
-
+#include <algorithm>
 
 class Request
 {
@@ -13,7 +13,9 @@ class Request
         std::string method;     // (GET, POST, DELETE)
         std::string path;        //(/index.html)
         std::string version;     // (HTTP/1.1)
-        std::map<std::string, std::string> headers; // (key-value pairs)
+
+        std::map<std::string, std::string> headers; // HOST / CONNECTION / CONTENT-LENGTH
+
         std::string body;        // (POST data)
         bool is_valid;           // (did parsing succeed?)
 
@@ -28,14 +30,14 @@ class Request
 
         bool parseRequest(std::string &buffer);
 
-		// GET/POST/DELETE
+		// GET/POST/DELETE + PATH + VERSION
         bool parseMethod(std::string &buffer);
-        
-        // PATH
         bool parsePath(std::string &buffer);
-        
-        // VERSION
         bool parseVersion(std::string &buffer);
+        
+
+        // HOST + CONNECTION + CONTENT LENGTH
+        bool parseHost(std::string &buffer); // For virtual hosting (domain name + port)
 
 };
 
