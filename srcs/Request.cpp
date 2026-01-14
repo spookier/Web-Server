@@ -1,4 +1,5 @@
 #include "../incs/Request.hpp"
+#include <cstddef>
 
 
 Request::Request()
@@ -30,9 +31,9 @@ bool Request::parseRequest(std::string &buffer)
         std::cout << "Parse VERSION fail\n";
         return (false);
     }   
-    if (parseHost(buffer) == false)
+    if (parseHeaders(buffer) == false)
     {
-        std::cout << "Parse HOST fail\n";
+        std::cout << "Parse HEADERS fail\n";
         return(false);
     }
 
@@ -119,43 +120,58 @@ bool Request::parseVersion(std::string &buffer)
 }
 
 
-// Serve default website for HTTP/1.0 | 404 for HTTP/1.1
-// Make them lowercase before saving in map
-bool Request::parseHost(std::string &buffer)
+// Parse ALL headers until we hit empty line (\r\n\r\n)
+// Make keys lowercase before saving in map
+bool Request::parseHeaders(std::string &buffer)
 {
-    size_t      end_pos;
-    size_t      newline_pos;
+    size_t      colon_pos;
+    size_t      end_of_line_pos;
+    size_t      value_start_pos;
     std::string tmp_key;
     std::string tmp_value;
-    
 
-    // key "HOST"
-    end_pos = buffer.find(':');
-    if (end_pos == std::string::npos || end_pos == 0)
+    // Loop until we hit empty line (start of body or end of headers)
+    while (buffer.compare(0, 2, "\r\n") != 0)
     {
-        return (false);
+        // Find the colon separator
+        colon_pos = buffer.find(':');
+        if (colon_pos == std::string::npos || colon_pos == 0)
+        {
+            return (false);
+        }
+
+        // Find end of this header line
+        end_of_line_pos = buffer.find("\r\n");
+        if (end_of_line_pos == std::string::npos || end_of_line_pos == 0)
+        {
+            return (false);
+        }
+
+        // Extract data (before :) and lowercase it
+        tmp_key.assign(buffer.begin(), buffer.begin() + colon_pos);
+        std::transform(tmp_key.begin(), tmp_key.end(), tmp_key.begin(), ::tolower);
+
+        // Skip colon + space (after ": ") 
+        value_start_pos = colon_pos + 1;
+
+        // Skip whitespace after ': '
+        while (value_start_pos < end_of_line_pos && buffer[value_start_pos] == ' ')
+        {
+            value_start_pos++;
+        }
+
+        tmp_value.assign(buffer.begin() + value_start_pos, buffer.begin() + end_of_line_pos);
+
+        // Add to headers map
+        headers[tmp_key] = tmp_value;
+
+        // Remove this header line from buffer
+        buffer.erase(0, end_of_line_pos + 2);
     }
-    
-    // Extract and lowercase the key
-    tmp_key.assign(buffer.begin(), buffer.begin() + end_pos);                   
-    std::transform(tmp_key.begin(), tmp_key.end(), tmp_key.begin(), ::tolower);
-    
 
-    // value "localhost:8080"
-    newline_pos = buffer.find("\r\n", end_pos);
-    if (newline_pos == std::string::npos || newline_pos == 0)
-    {
-        return (false);
-    }
+    // Remove the final \r\n
+    buffer.erase(0, 2);
 
-    tmp_value.assign(buffer.begin() + end_pos + 2, buffer.begin() + newline_pos);
-    std::transform(tmp_value.begin(), tmp_value.end(), tmp_value.begin(), ::tolower);
-    
-
-    // Add key-value
-    headers[tmp_key] = tmp_value;
-
-    buffer.erase(0, newline_pos + 2);
     return (true);
 }
 

@@ -36,8 +36,8 @@ class Request
         bool parseVersion(std::string &buffer);
         
 
-        // HOST + CONNECTION + CONTENT LENGTH
-        bool parseHost(std::string &buffer); // For virtual hosting (domain name + port)
+        // Parse all headers into map
+        bool parseHeaders(std::string &buffer);
 
 };
 
