@@ -6,10 +6,12 @@ Client::Client(int _fd) : fd(_fd), request_complete(false)
     // std::cout << "Client created for fd: " << this->fd << std::endl;
 }
 
+
 Client::Client(const Client &c) : fd(c.fd), buffer(c.buffer), request_complete(c.request_complete)
 {
     // std::cout << "Client copy constructor called for fd: " << this->fd << std::endl;
 }
+
 
 Client &Client::operator=(const Client &other)
 {
@@ -22,6 +24,7 @@ Client &Client::operator=(const Client &other)
     return *this;
 }
 
+
 void Client::save_buffer(std::string _buffer)
 {
     buffer.append(_buffer);
@@ -33,15 +36,18 @@ void Client::save_buffer(std::string _buffer)
     }
 }
 
+
 int Client::getFd() const
 {
     return(this->fd);
 }
 
+
 bool Client::isRequestComplete() const
 {
     return(this->request_complete);
 }
+
 
 std::string Client::getBuffer() const
 {
@@ -56,8 +62,6 @@ bool Client::isRequestValid()
     else
         return (false);
 }
-
-
 
 
 

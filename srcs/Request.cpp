@@ -1,6 +1,4 @@
 #include "../incs/Request.hpp"
-#include <cstddef>
-
 
 Request::Request()
 {
@@ -34,20 +32,25 @@ bool Request::parseRequest(std::string &buffer)
     if (parseHeaders(buffer) == false)
     {
         std::cout << "Parse HEADERS fail\n";
-        return(false);
+        return (false);
+    }
+    if (parseBody(buffer) == false)
+    {
+        std::cout << "Parse BDOY fail\n";
+        return (false);
     }
 
 	this->is_valid = true;
 
-    std::cout << this->method << " " << this->path << " " << this->version << std::endl;
-   // std::cout << "The rest: " << buffer << std::endl;
+    // std::cout << this->method << " " << this->path << " " << this->version << std::endl;
+   std::cout << "BODY: " << this->body << std::endl;
 
-    std::map<std::string, std::string>::iterator it;
-    for(it = headers.begin(); it != headers.end(); ++it)
-    {
-       std::cout << it->first << ' ' << it->second << std::endl;
-    }
-
+    // std::map<std::string, std::string>::iterator it;
+    // for(it = headers.begin(); it != headers.end(); ++it)
+    // {
+    //    std::cout << it->first << ' ' << it->second << std::endl;
+    // }
+    //
     return(true);
 }
 
@@ -125,7 +128,7 @@ bool Request::parseVersion(std::string &buffer)
 bool Request::parseHeaders(std::string &buffer)
 {
     size_t      colon_pos;
-    size_t      end_of_line_pos;
+    size_t      end_of_line;
     size_t      value_start_pos;
     std::string tmp_key;
     std::string tmp_value;
@@ -141,8 +144,8 @@ bool Request::parseHeaders(std::string &buffer)
         }
 
         // Find end of this header line
-        end_of_line_pos = buffer.find("\r\n");
-        if (end_of_line_pos == std::string::npos || end_of_line_pos == 0)
+        end_of_line = buffer.find("\r\n");
+        if (end_of_line == std::string::npos || end_of_line == 0)
         {
             return (false);
         }
@@ -155,18 +158,18 @@ bool Request::parseHeaders(std::string &buffer)
         value_start_pos = colon_pos + 1;
 
         // Skip whitespace after ': '
-        while (value_start_pos < end_of_line_pos && buffer[value_start_pos] == ' ')
+        while (value_start_pos < end_of_line && buffer[value_start_pos] == ' ')
         {
             value_start_pos++;
         }
 
-        tmp_value.assign(buffer.begin() + value_start_pos, buffer.begin() + end_of_line_pos);
+        tmp_value.assign(buffer.begin() + value_start_pos, buffer.begin() + end_of_line);
 
         // Add to headers map
         headers[tmp_key] = tmp_value;
 
         // Remove this header line from buffer
-        buffer.erase(0, end_of_line_pos + 2);
+        buffer.erase(0, end_of_line + 2);
     }
 
     // Remove the final \r\n
@@ -175,6 +178,38 @@ bool Request::parseHeaders(std::string &buffer)
     return (true);
 }
 
+
+bool Request::parseBody(std::string &buffer)
+{
+
+    size_t content_length;
+    std::map<std::string, std::string>::iterator it;
+
+    // Check if content-length header exists
+    it = headers.find("content-length");
+    if (it == headers.end())
+    {
+        // No content-length = no body (typical for GET requests)
+        this->body = "";
+        return (true);
+    }
+
+    // Get the content length value
+    content_length = static_cast<size_t>(std::atoi(it->second.c_str()));
+
+    // Check if we have enough data in buffer
+    if (buffer.length() < content_length)
+    {
+        std::cout << "Body incomplete: got " << buffer.length() << ", expected " << content_length << std::endl;
+        return (false);
+    }
+
+    // Extract the body
+    this->body.assign(buffer.begin(), buffer.begin() + content_length);
+    buffer.erase(0, content_length);
+
+    return (true);
+}
 
 Request::~Request()
 {

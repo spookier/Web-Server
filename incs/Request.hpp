@@ -5,6 +5,11 @@
 #include <map>
 #include <iostream>
 #include <algorithm>
+#include <cstddef>
+#include <cstdlib>
+
+
+
 
 class Request
 {
@@ -38,6 +43,8 @@ class Request
 
         // Parse all headers into map
         bool parseHeaders(std::string &buffer);
+
+        bool parseBody(std::string &body);
 
 };
 
