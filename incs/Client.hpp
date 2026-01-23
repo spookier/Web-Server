@@ -4,7 +4,6 @@
 #include "Request.hpp"
 
 #include <string>
-#include <iostream>
 
 
 class Client                    

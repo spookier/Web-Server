@@ -9,6 +9,8 @@ FILES =		$(SRC)main.cpp \
 			$(SRC)Server.cpp \
 			$(SRC)Client.cpp \
 			$(SRC)Request.cpp \
+			$(SRC)Response.cpp \
+
 
 OBJ_FILES = $(FILES:.cpp=.o)
 

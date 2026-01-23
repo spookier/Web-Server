@@ -211,7 +211,32 @@ bool Request::parseBody(std::string &buffer)
     return (true);
 }
 
+const std::string &Request::getMethod() const
+{
+    return (this->method);
+}
+
+const std::string &Request::getPath() const
+{
+    return (this->path);
+}
+
+const std::string &Request::getVersion() const
+{
+    return (this->version);
+}
+
+const std::map<std::string, std::string> &Request::getHeadersMap() const
+{
+    return (this->headers);
+}
+
+const std::string &Request::getBody() const
+{
+    return (this->body);
+}
+
 Request::~Request()
 {
-	
+
 }

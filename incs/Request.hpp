@@ -3,9 +3,6 @@
 
 #include <string>
 #include <map>
-#include <iostream>
-#include <algorithm>
-#include <cstddef>
 #include <cstdlib>
 
 
@@ -32,20 +29,31 @@ class Request
 
         ~Request(); 
                                                                                             
-
+        // Parse the ENTIRE request
         bool parseRequest(std::string &buffer);
 
-		// GET/POST/DELETE + PATH + VERSION
+
+        // Parse the Request line (method+path+version)
         bool parseMethod(std::string &buffer);
         bool parsePath(std::string &buffer);
         bool parseVersion(std::string &buffer);
         
 
-        // Parse all headers into map
+        // Parse all headers in std::map 'headers'
         bool parseHeaders(std::string &buffer);
 
+        // Parse body in std::string 'body' 
         bool parseBody(std::string &body);
+        
 
+        // -----------------------------------------
+
+        // GETTERS
+        const std::string &getMethod() const;
+        const std::string &getPath() const;
+        const std::string &getVersion() const;
+        const std::map<std::string, std::string> &getHeadersMap() const;
+        const std::string &getBody() const;
 };
 
 #endif

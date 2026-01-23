@@ -3,8 +3,6 @@
 
 #include "Client.hpp"
 #include <sys/socket.h>
-#include <errno.h>
-#include <iostream>
 #include <cstring>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -12,7 +10,6 @@
 #include <poll.h>
 #include <unistd.h>
 #include <cstdio>
-#include <map>
 
 class Server
 {
